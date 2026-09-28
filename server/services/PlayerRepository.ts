@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { BUSINESS_DEFINITIONS, type ItemId } from '../../shared/config';
-import type { Business, InventoryItem, PlayerState, Point } from '../../shared/types';
+import { BUSINESS_DEFINITIONS, calculateSavingsPayout, type ItemId } from '../../shared/config';
+import type { Business, InventoryItem, PlayerState, Point, SavingsDeposit } from '../../shared/types';
 import { GameDatabase } from '../database/db';
 import { ensure } from './errors';
 export interface ProfileRow { id: string; username: string; avatar: number; x: number; y: number; apartment: number; commerce: number }
@@ -35,10 +35,72 @@ export class PlayerRepository {
   }
   ledger(id: string, amount: number, label: string, businessId: string | null = null) { this.db.run('INSERT INTO ledger VALUES(?,?,?,?,?,?)', randomUUID(), id, businessId, label, amount, Date.now()); }
   businesses(id?: string) { return this.db.all<BusinessRow>(businessQuery + (id ? ' WHERE b.owner_id=?' : ''), ...(id ? [id] : [])).map(toBusiness); }
+
+  savings(id: string): SavingsDeposit[] {
+    const rows = this.db.all<{
+      id: string; player_id: string; principal: number; term_months: number;
+      interest_rate: number; is_compound: number; created_at: number;
+      duration_seconds: number; status: 'active' | 'withdrawn';
+      withdrawn_at: number | null; interest_paid: number;
+    }>('SELECT * FROM bank_savings WHERE player_id=? ORDER BY created_at DESC', id);
+
+    const now = Date.now();
+    return rows.map(r => {
+      const elapsedSeconds = Math.max(0, (now - r.created_at) / 1000);
+      const progress = Math.min(1, elapsedSeconds / r.duration_seconds);
+      const isCompound = !!r.is_compound;
+
+      const payout = calculateSavingsPayout(r.principal, r.term_months, r.interest_rate, isCompound, progress);
+      const fullPayout = calculateSavingsPayout(r.principal, r.term_months, r.interest_rate, isCompound, 1);
+
+      return {
+        id: r.id,
+        playerId: r.player_id,
+        principal: r.principal,
+        termMonths: r.term_months,
+        interestRate: r.interest_rate,
+        isCompound,
+        createdAt: r.created_at,
+        durationSeconds: r.duration_seconds,
+        maturesAt: r.created_at + r.duration_seconds * 1000,
+        status: r.status,
+        withdrawnAt: r.withdrawn_at ?? undefined,
+        interestPaid: r.interest_paid,
+        currentInterest: r.status === 'withdrawn' ? r.interest_paid : payout.interest,
+        expectedPayout: fullPayout.total,
+      };
+    });
+  }
+
+  fashion(id: string) {
+    const row = this.db.get<{ umbrella: number; raincoat: number; cap: number }>(
+      'SELECT umbrella, raincoat, cap FROM player_fashion WHERE player_id=?',
+      id
+    );
+    return {
+      umbrella: !!row?.umbrella,
+      raincoat: !!row?.raincoat,
+      cap: !!row?.cap,
+    };
+  }
+
   snapshot(id: string, prices: Record<ItemId, number>, position?: Point): PlayerState {
     const p = this.profile(id), wallet = this.wallet(id), inventory = this.inventory(id), businesses = this.businesses(id);
     const escrow = this.db.all<{ item_id: ItemId; quantity: number }>("SELECT item_id,quantity FROM marketplace_listings WHERE seller_id=? AND status='active'", id);
-    const netWorth = wallet.cash + wallet.bank + inventory.reduce((sum, item) => sum + item.quantity * prices[item.itemId], 0) + escrow.reduce((sum, item) => sum + item.quantity * prices[item.item_id], 0) + businesses.reduce((sum, b) => sum + b.valuation, 0);
-    return { id, name: p.username, avatar: p.avatar, x: position?.x ?? p.x, y: position?.y ?? p.y, direction: 1, moving: false, cash: wallet.cash, bankBalance: wallet.bank, netWorth, inventory, businesses, apartment: !!p.apartment, skills: { commerce: p.commerce }, ledger: this.db.all('SELECT id,label,amount,created_at AS createdAt FROM ledger WHERE player_id=? ORDER BY created_at DESC,rowid DESC LIMIT 20', id) };
+    const savings = this.savings(id);
+    const activeSavings = savings.filter(s => s.status === 'active');
+    const savingsTotal = activeSavings.reduce((sum, s) => sum + s.principal + s.currentInterest, 0);
+    const fashion = this.fashion(id);
+
+    const netWorth = wallet.cash + wallet.bank + savingsTotal + inventory.reduce((sum, item) => sum + item.quantity * (prices[item.itemId] ?? 0), 0) + escrow.reduce((sum, item) => sum + item.quantity * (prices[item.item_id] ?? 0), 0) + businesses.reduce((sum, b) => sum + b.valuation, 0);
+
+    return {
+      id, name: p.username, avatar: p.avatar, x: position?.x ?? p.x, y: position?.y ?? p.y, direction: 1, moving: false,
+      cash: wallet.cash, bankBalance: wallet.bank, netWorth, inventory, businesses,
+      apartment: !!p.apartment, skills: { commerce: p.commerce },
+      ledger: this.db.all('SELECT id,label,amount,created_at AS createdAt FROM ledger WHERE player_id=? ORDER BY created_at DESC,rowid DESC LIMIT 20', id),
+      savings,
+      equippedFashion: fashion,
+    };
   }
 }

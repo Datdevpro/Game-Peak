@@ -59,3 +59,23 @@ CREATE TABLE IF NOT EXISTS requests(
 );
 CREATE TABLE IF NOT EXISTS world_state(id INTEGER PRIMARY KEY CHECK(id=1), minutes REAL NOT NULL, weather TEXT NOT NULL, event TEXT, economy TEXT NOT NULL DEFAULT '{}');
 CREATE TABLE IF NOT EXISTS world_events(id TEXT PRIMARY KEY, name TEXT NOT NULL, starts_at REAL NOT NULL, ends_at REAL NOT NULL, data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS bank_savings(
+  id TEXT PRIMARY KEY,
+  player_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  principal INTEGER NOT NULL CHECK(principal > 0),
+  term_months INTEGER NOT NULL CHECK(term_months IN (1, 3, 6, 9, 12)),
+  interest_rate REAL NOT NULL,
+  is_compound INTEGER NOT NULL DEFAULT 1 CHECK(is_compound IN (0, 1)),
+  created_at INTEGER NOT NULL,
+  duration_seconds INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'withdrawn')),
+  withdrawn_at INTEGER,
+  interest_paid INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS bank_savings_player ON bank_savings(player_id, status);
+CREATE TABLE IF NOT EXISTS player_fashion(
+  player_id TEXT PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  umbrella INTEGER NOT NULL DEFAULT 0,
+  raincoat INTEGER NOT NULL DEFAULT 0,
+  cap INTEGER NOT NULL DEFAULT 0
+);

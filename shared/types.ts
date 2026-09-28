@@ -9,10 +9,28 @@ export interface Business {
   revenue: number; cogs: number; rent: number; salary: number; utility: number;
   profit: number; reputation: number; customers: number; valuation: number;
 }
+export interface SavingsDeposit {
+  id: string;
+  playerId: string;
+  principal: number;
+  termMonths: number;
+  interestRate: number;
+  isCompound: boolean;
+  createdAt: number;
+  durationSeconds: number;
+  maturesAt: number;
+  status: 'active' | 'withdrawn';
+  withdrawnAt?: number;
+  interestPaid: number;
+  currentInterest: number;
+  expectedPayout: number;
+}
 export interface PlayerState extends Actor {
   cash: number; bankBalance: number; netWorth: number; inventory: InventoryItem[];
   businesses: Business[]; apartment: boolean; skills: { commerce: number };
   ledger: { id: string; label: string; amount: number; createdAt: number }[];
+  savings: SavingsDeposit[];
+  equippedFashion: { umbrella?: boolean; raincoat?: boolean; cap?: boolean };
 }
 export interface Listing { id: string; sellerId: string; sellerName: string; itemId: ItemId; quantity: number; price: number }
 export interface WorldEvent { id: string; name: string; description: string; endsAt: number; priceFactor: number; demandFactor: number }
@@ -22,7 +40,7 @@ export interface WorldState {
   properties: { id: string; ownerId: string | null; businessName: string | null; open: boolean }[];
   debug: boolean;
 }
-export type Panel = 'inventory' | 'business' | 'market' | 'marketplace' | 'bank' | 'phone' | 'profile' | 'map' | 'property' | 'apartment' | 'npc' | 'debug' | null;
+export type Panel = 'inventory' | 'business' | 'market' | 'marketplace' | 'bank' | 'phone' | 'profile' | 'map' | 'property' | 'apartment' | 'npc' | 'debug' | 'fashion' | null;
 export interface Action { type: string; [key: string]: unknown }
 export type ServerMessage =
   | { type: 'world'; world: WorldState }

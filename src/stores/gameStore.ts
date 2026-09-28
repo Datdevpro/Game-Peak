@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { CONFIG, ITEMS } from '../../shared/config';
+import { CONFIG, ITEMS, type ItemId } from '../../shared/config';
 import type { Panel, PlayerState, WorldState } from '../../shared/types';
-const previewWorld: WorldState = { minutes: 480, day: 1, weather: 'sunny', temperature: 27, prices: { beans: ITEMS.beans.basePrice, milk: ITEMS.milk.basePrice, tea: ITEMS.tea.basePrice }, event: null, players: [], npcs: [], properties: [], debug: false };
+const previewWorld: WorldState = { minutes: 480, day: 1, weather: 'sunny', temperature: 27, prices: Object.fromEntries(Object.values(ITEMS).map(i => [i.id, i.basePrice])) as Record<ItemId, number>, event: null, players: [], npcs: [], properties: [], debug: false };
 interface GameStore {
   player: PlayerState | null; world: WorldState; panel: Panel; selected: string;
   connected: boolean; ready: boolean; fps: number; position: { x: number; y: number }; nearby: string;

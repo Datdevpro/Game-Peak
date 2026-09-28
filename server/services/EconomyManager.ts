@@ -1,8 +1,8 @@
 import { ITEMS, type ItemId } from '../../shared/config';
 import type { WorldEvent } from '../../shared/types';
 export class EconomyManager {
-  pressure: Record<ItemId, number> = { beans: 0, milk: 0, tea: 0 };
-  prices: Record<ItemId, number> = { beans: 1000, milk: 400, tea: 700 };
+  pressure: Record<ItemId, number> = Object.fromEntries(Object.keys(ITEMS).map(k => [k, 0])) as Record<ItemId, number>;
+  prices: Record<ItemId, number> = Object.fromEntries(Object.values(ITEMS).map(i => [i.id, i.basePrice])) as Record<ItemId, number>;
   private lastMinute = -1;
   trade(item: ItemId, quantity: number) { this.pressure[item] = Math.max(-0.18, Math.min(0.25, this.pressure[item] + quantity * 0.0002)); }
   update(minutes: number, event: WorldEvent | null) {
