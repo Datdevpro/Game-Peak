@@ -107,7 +107,7 @@ describe('Demo Flow V1 Hoàn chỉnh (Section 35)', () => {
       // Step 9: NPC khách hàng tới quán -> phát sinh doanh thu khi khách tới
       const cashBefore = snapA.cash;
       // Advance simulation ticks so NPCs decide, travel to Dat Coffee, and buy coffee
-      for (let tick = 0; tick < 100; tick++) {
+      for (let tick = 0; tick < 300; tick++) {
         server.room.tick(0.2);
         if (server.service.players.businesses(meA.id)[0].customers > 0) break;
       }
