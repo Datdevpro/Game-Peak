@@ -16,7 +16,7 @@ export class TownRoom extends EventEmitter {
   constructor(readonly service: GameService, readonly debug = false) {
     super();
     const saved = service.db.get<{ minutes: number; weather: WeatherKind; event: string | null; economy: string }>('SELECT * FROM world_state WHERE id=1')!;
-    this.time = new TimeManager(saved.minutes); this.weather = new WeatherManager(saved.weather, saved.minutes);
+    this.time = new TimeManager(saved.minutes, true); this.weather = new WeatherManager(saved.weather, saved.minutes);
     this.events = new EventManager(saved.event ? JSON.parse(saved.event) as WorldEvent : null, saved.minutes);
     Object.assign(service.economy.pressure, JSON.parse(saved.economy));
     this.npcs = new NPCManager(service.businesses, sale => { this.emit('sale', sale); this.emit('dirty', [sale.ownerId]); });

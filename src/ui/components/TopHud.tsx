@@ -16,10 +16,9 @@ export function TopHud() {
 
   const hour = Math.floor(world.minutes / 60) % 24;
   const minute = Math.floor(world.minutes % 60);
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = (hour % 12 || 12).toString().padStart(2, '0');
+  const displayHour = hour.toString().padStart(2, '0');
   const displayMinute = minute.toString().padStart(2, '0');
-  const timeString = `${displayHour}:${displayMinute} ${period}`;
+  const timeString = `${displayHour}:${displayMinute}`;
 
   const weatherInfo = WEATHER[world.weather] ?? { name: 'Nắng', icon: '☀️' };
   const onlineCount = world.players.length;
