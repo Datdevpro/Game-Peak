@@ -11,10 +11,14 @@ export class NPCManager {
   private entries: SimNpc[] = [];
   private decisionAccumulator = 0;
   constructor(private businesses: BusinessManager, private onSale: (sale: NonNullable<ReturnType<BusinessManager['sale']>>) => void, private random = Math.random) {
+    this.entries.push({
+      actor: { id: 'npc-fashion', name: 'Cửa Hàng Thời Trang', avatar: 5, x: 1445, y: 520, direction: -1, moving: false, state: 'idle', archetype: 'Shopkeeper' },
+      path: [], wait: 999999, destination: 'idle', phase: 'outside', travel: 0
+    });
     for (let i = 0; i < CONFIG.npcCount; i++) this.spawn();
   }
   spawn() {
-    if (this.entries.length >= 40) return;
+    if (this.entries.length >= 45) return;
     const i = this.entries.length, p = WAYPOINTS[i % 15];
     this.entries.push({ actor: { id: `npc-${i}`, name: names[i % names.length], avatar: i % 24, ...p, direction: 1, moving: false, state: 'idle', archetype: archetypes[i % 5] }, path: [], wait: i * 0.2, destination: 'idle', phase: '', travel: 0 });
   }
@@ -30,6 +34,7 @@ export class NPCManager {
     const shops = decide ? this.businesses.openShops() : [];
     for (let index = 0; index < this.entries.length; index++) {
       const e = this.entries[index], a = e.actor;
+      if (a.id === 'npc-fashion') continue;
       e.wait -= dt;
       const night = hour < 6 || hour >= 21;
       const atWork = a.archetype === 'OfficeWorker' && hour >= 8 && hour < 17;
@@ -38,7 +43,7 @@ export class NPCManager {
       if (decide && e.phase !== phase) {
         e.phase = phase; delete a.targetBusiness;
         if (phase === 'home' || phase === 'working') {
-          const b = BUILDINGS.find(b => b.id === (phase === 'home' ? 'apartment' : 'office'))!;
+          const b = BUILDINGS.find(b => b.id === (phase === 'home' ? 'apartment' : (BUILDINGS.some(x => x.id === 'office') ? 'office' : 'fashion')))!;
           this.go(e, b.door, phase); continue;
         }
         a.state = 'idle'; e.wait = this.random() * 3; e.path = [];

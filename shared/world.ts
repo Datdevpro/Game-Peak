@@ -1,11 +1,11 @@
 import { CONFIG } from './config';
 import type { Point } from './types';
 export const WORLD = { width: 1920, height: 1400 };
-export interface Building { id: string; name: string; x: number; y: number; w: number; h: number; color: number; roof: number; kind: 'bank' | 'market' | 'property' | 'cafe' | 'office' | 'apartment'; door: Point }
+export interface Building { id: string; name: string; x: number; y: number; w: number; h: number; color: number; roof: number; kind: 'bank' | 'market' | 'property' | 'cafe' | 'office' | 'apartment' | 'fashion'; door: Point }
 export const BUILDINGS: Building[] = [
   { id: 'bank', name: 'NGÂN HÀNG LÁ', x: 180, y: 270, w: 260, h: 215, color: 0xf5e4c8, roof: 0x78a696, kind: 'bank', door: { x: 310, y: 515 } },
   { id: 'market', name: 'CHỢ MẦM XANH', x: 690, y: 270, w: 310, h: 210, color: 0xfbe1bd, roof: 0xe69573, kind: 'market', door: { x: 845, y: 515 } },
-  { id: 'office', name: 'STUDIO MÂY', x: 1280, y: 205, w: 260, h: 270, color: 0xe1e5ef, roof: 0x91a9c3, kind: 'office', door: { x: 1410, y: 515 } },
+  { id: 'fashion', name: 'CỬA HÀNG THỜI TRANG', x: 1280, y: 205, w: 260, h: 270, color: 0xe1e5ef, roof: 0x91a9c3, kind: 'fashion', door: { x: 1410, y: 515 } },
   { id: 'lot-1', name: 'MẶT BẰNG 01', x: 190, y: 795, w: 250, h: 195, color: 0xf6ddc9, roof: 0xd18e7b, kind: 'property', door: { x: 315, y: 1020 } },
   { id: 'lot-2', name: 'MẶT BẰNG 02', x: 1300, y: 795, w: 250, h: 195, color: 0xf0e5c6, roof: 0xc5aa6c, kind: 'property', door: { x: 1425, y: 1020 } },
   { id: 'cafe', name: 'MỘC COFFEE', x: 1640, y: 300, w: 210, h: 180, color: 0xf6d6c9, roof: 0xb68eaa, kind: 'cafe', door: { x: 1745, y: 515 } },

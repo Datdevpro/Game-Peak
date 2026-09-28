@@ -60,8 +60,9 @@ export function drawTown(scene: Phaser.Scene) {
         bg.fillCircle(b.x + 14 + (i + 0.5) * (b.w - 28) / 8, b.y + 89, (b.w - 28) / 17);
       }
     }
-    bg.fillStyle(0xfff9e9).fillRoundedRect(dx - 85, b.y + 26, 170, 25, 5);
-    label(scene, dx, b.y + 39, b.name, b.w < 240 ? 10 : 12).setDepth(b.y + b.h + 1);
+    const signW = b.name.length > 14 ? 200 : 170;
+    bg.fillStyle(0xfff9e9).fillRoundedRect(dx - signW / 2, b.y + 26, signW, 26, 5);
+    label(scene, dx, b.y + 39, b.name, b.name.length > 14 ? 10.5 : b.w < 240 ? 10 : 12).setDepth(b.y + b.h + 1);
     if (b.kind === 'property') {
       bg.fillStyle(0xfff2cc).fillRoundedRect(b.x + 10, b.y + b.h - 43, 78, 32, 4);
       label(scene, b.x + 49, b.y + b.h - 27, 'FOR RENT', 10, '#a16e4e').setDepth(b.y + b.h + 1);
@@ -89,6 +90,7 @@ export function drawTown(scene: Phaser.Scene) {
     const x = 120 + i * 97 % 1700, y = i % 2 ? 1170 + i * 13 % 130 : 120 + i * 7 % 80;
     g.fillStyle([0xf8e7a2, 0xeab0a0, 0xffffff][i % 3]).fillCircle(x, y, 3);
   }
+
   label(scene, 925, 695, 'MẦM XANH  /  DOWNTOWN', 13, '#748477').setDepth(-1);
 }
 

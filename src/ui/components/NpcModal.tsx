@@ -5,7 +5,7 @@ import { ModalWrapper } from './ModalWrapper';
 
 const archetypesDialogs: Record<string, string[]> = {
   OfficeWorker: [
-    'Tôi chuẩn bị vào ca làm việc tại Studio Mây. Một cốc cà phê thơm buổi sáng sẽ giúp tôi tỉnh táo cả ngày!',
+    'Tôi chuẩn bị vào ca làm việc tại Cửa Hàng Thời Trang. Một cốc cà phê thơm buổi sáng sẽ giúp tôi tỉnh táo cả ngày!',
     'Hôm nay giá hạt cà phê trên thị trường thế nào nhỉ? Quán nào giá mềm tôi sẽ ghé mua thường xuyên.',
     'Trời nắng ấm thế này, giờ giải lao đi dạo công viên Mầm là thích nhất.',
   ],

@@ -60,6 +60,8 @@ export function MapModal({ onClose }: { onClose: () => void }) {
                   ? '🏦'
                   : b.kind === 'market'
                   ? '🛒'
+                  : b.kind === 'fashion'
+                  ? '👗'
                   : b.kind === 'office'
                   ? '🏢'
                   : b.kind === 'cafe'
