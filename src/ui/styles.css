@@ -1891,5 +1891,740 @@ button:disabled {
 }
 
 /* Utilities */
+.mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 12px; }
+.mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.w-full { width: 100%; }
+.font-bold { font-weight: 700; }
+.text-purple { color: #7209b7; }
+.text-amber { color: #d97706; }
+.text-lg { font-size: 16px; }
+.text-xl { font-size: 18px; }
+
+/* ==========================================================================
+   BANK SAVINGS & COMPOUND INTEREST STYLES
+   ========================================================================== */
+
+.savings-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bank-terms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.term-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(45, 106, 79, 0.18);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.term-card:hover {
+  border-color: var(--c-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  background: #ffffff;
+}
+
+.term-card.selected {
+  background: linear-gradient(135deg, rgba(45, 106, 79, 0.1), rgba(64, 145, 108, 0.18));
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 2px rgba(45, 106, 79, 0.28);
+}
+
+.term-duration {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--c-primary);
+}
+
+.term-rate {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+  margin: 3px 0;
+}
+
+.term-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.term-min {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.term-badge {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.source-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.source-btn {
+  padding: 8px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: var(--radius-sm);
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.source-btn.active {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+  color: var(--c-primary-hover);
+}
+
+.label-with-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.compound-toggle-card {
+  background: linear-gradient(135deg, rgba(114, 9, 183, 0.06), rgba(67, 97, 238, 0.08));
+  border: 1.5px dashed rgba(114, 9, 183, 0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.compound-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: #7209b7;
+  cursor: pointer;
+}
+
+.compound-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #581c87;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-glow {
+  background: #7209b7;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.4px;
+}
+
+.compound-desc {
+  font-size: 12px;
+  color: #4b5563;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.payout-estimate-box {
+  background: #ffffff;
+  border: 1px solid rgba(45, 106, 79, 0.25);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.estimate-header {
+  background: linear-gradient(90deg, #1b4332, #2d6a4f);
+  color: white;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge-rate {
+  background: #f59e0b;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.estimate-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.estimate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.estimate-row.bonus-row {
+  background: rgba(245, 158, 11, 0.1);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.estimate-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.estimate-row.total-row {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* My Savings List View */
+.my-savings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.empty-savings-state {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.empty-icon {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.savings-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(45, 106, 79, 0.2);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.savings-card.matured {
+  border-color: #10b981;
+  background: linear-gradient(180deg, #ffffff, #f0fdf4);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+}
+
+.savings-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.savings-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.savings-icon {
+  font-size: 26px;
+}
+
+.savings-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.tag-rate {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.tag-type {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.tag-compound {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.tag-simple {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-matured {
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  animation: pulse-glow 1.5s infinite;
+}
+
+.badge-running {
+  background: #e0f2fe;
+  color: #0284c7;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.savings-progress-wrap {
+  width: 100%;
+  height: 7px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.savings-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  transition: width 0.3s ease;
+}
+
+.savings-progress-bar.complete {
+  background: #10b981;
+}
+
+.savings-details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: rgba(243, 244, 246, 0.7);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.detail-val {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.savings-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-withdraw-early {
+  font-size: 12px;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  text-align: center;
+}
+
+.btn-withdraw-early:hover {
+  background: #fde68a;
+}
+
+.btn-glow {
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  font-size: 14px;
+}
+
+.savings-history-section {
+  border-top: 1px dashed #d1d5db;
+  padding-top: 12px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 6px 10px;
+  background: #f9fafb;
+  border-radius: var(--radius-sm);
+  border: 1px solid #f3f4f6;
+}
+
+/* Calculator View */
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.calc-table th {
+  background: #f3f4f6;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.calc-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.calc-table tr:hover td {
+  background: #f9fafb;
+}
+
+.formula-explanation {
+  background: #f8fafc;
+  border-left: 3px solid #7209b7;
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 12px;
+}
+
+.formula-explanation code {
+  display: inline-block;
+  background: #e2e8f0;
+  color: #1e293b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: bold;
+  margin-left: 6px;
+}
+
+/* ==========================================================================
+   FASHION SHOP & WARDROBE STYLES
+   ========================================================================== */
+
+.fashion-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(168, 85, 247, 0.08));
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.fashion-intro {
+  flex: 1;
+}
+
+.fashion-npc-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #db2777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fashion-npc-quote {
+  font-size: 12px;
+  color: #4b5563;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.fashion-wallet {
+  text-align: right;
+  margin-left: 12px;
+}
+
+.fashion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.fashion-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1.5px solid rgba(236, 72, 153, 0.18);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.fashion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(236, 72, 153, 0.12);
+  border-color: #ec4899;
+}
+
+.fashion-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fashion-item-icon {
+  font-size: 34px;
+  background: #fdf2f8;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid #fbcfe8;
+}
+
+.fashion-item-header {
+  flex: 1;
+}
+
+.fashion-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.fashion-badge {
+  background: #fce7f3;
+  color: #be185d;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.badge-owned {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.fashion-item-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.fashion-item-price {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.fashion-item-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.fashion-item-effect {
+  font-size: 11px;
+  color: #059669;
+  font-weight: 600;
+  background: #ecfdf5;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+
+.fashion-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.fashion-card-actions button {
+  flex: 1;
+}
+
+.btn-buy {
+  background: linear-gradient(135deg, #db2777, #be185d);
+  color: white;
+  font-weight: 700;
+}
+
+.btn-buy:hover {
+  background: #be185d;
+}
+
+.btn-toggle-equip {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  transition: all 0.15s ease;
+}
+
+.btn-toggle-equip:hover {
+  background: #e5e7eb;
+}
+
+.btn-toggle-equip.equipped {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+/* Wardrobe styles */
+.wardrobe-section {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.wardrobe-empty {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.wardrobe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wardrobe-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.wardrobe-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wardrobe-icon {
+  font-size: 28px;
+  background: #f3f4f6;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.wardrobe-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wardrobe-item-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.wardrobe-qty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.badge-equipped-tag {
+  background: #10b981;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.wardrobe-desc {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.btn-equip-action {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.btn-unequip {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.btn-unequip:hover {
+  background: #fee2e2;
+}
+

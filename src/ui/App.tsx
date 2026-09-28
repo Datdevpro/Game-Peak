@@ -16,6 +16,7 @@ import { ProfileModal } from './components/ProfileModal';
 import { MapModal } from './components/MapModal';
 import { ApartmentModal } from './components/ApartmentModal';
 import { NpcModal } from './components/NpcModal';
+import { FashionModal } from './components/FashionModal';
 import { DebugModal } from './components/DebugModal';
 import { Toast } from './components/Toast';
 
@@ -47,6 +48,7 @@ export function App() {
           {panel === 'marketplace' && <MarketModal onClose={() => setPanel(null)} initialTab="p2p" />}
           {(panel === 'business' || panel === 'property') && <BusinessModal onClose={() => setPanel(null)} />}
           {panel === 'bank' && <BankModal onClose={() => setPanel(null)} />}
+          {panel === 'fashion' && <FashionModal onClose={() => setPanel(null)} />}
           {panel === 'inventory' && <InventoryModal onClose={() => setPanel(null)} />}
           {panel === 'profile' && <ProfileModal onClose={() => setPanel(null)} />}
           {panel === 'map' && <MapModal onClose={() => setPanel(null)} />}
