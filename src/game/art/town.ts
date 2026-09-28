@@ -20,7 +20,10 @@ export function drawTown(scene: Phaser.Scene) {
   g.fillStyle(0xf7f1dd);
   for (const cx of [500, 1090, 1560]) for (let i = 0; i < 7; i++) g.fillRoundedRect(cx, 591 + i * 13, 39, 7, 2);
   for (let x = 70; x < 1880; x += 42) {
-    g.lineStyle(1, 0xd3ccb8, 0.55).lineBetween(x, 505, x, 580).lineBetween(x, 688, x, 722);
+    g.lineStyle(1, 0xd3ccb8, 0.55)
+      .lineBetween(x, 505, x, 580)
+      .lineBetween(x, 688, x, 722)
+      .lineBetween(x, 1015, x, 1135);
   }
   // Park, pond, fountain and walking paths.
   g.fillStyle(0x739958, 0.15).fillRoundedRect(PARK.x + 5, PARK.y + 7, PARK.w, PARK.h, 35);
@@ -81,12 +84,12 @@ export function drawTown(scene: Phaser.Scene) {
     t.fillStyle(i % 5 === 0 ? 0xf0c7bf : 0x9ac084).fillCircle(x - 8, y - 68, 24).fillCircle(x + 19, y - 51, 20);
     t.fillStyle(0xffffff, 0.12).fillEllipse(x - 13, y - 76, 17, 9);
   }
-  for (const [x, y] of [[735, 913], [1000, 985], [120, 555], [1240, 711], [1700, 710]]) {
+  for (const [x, y] of [[735, 913], [1000, 985], [120, 555], [1240, 711], [1700, 710], [480, 1085], [1340, 1085], [1680, 1085]]) {
     const bench = scene.add.graphics().setDepth(y);
     bench.fillStyle(0x4e7262).fillRect(x - 21, y - 9, 5, 21).fillRect(x + 17, y - 9, 5, 21);
     bench.fillStyle(0xba936f).fillRoundedRect(x - 30, y - 21, 60, 8, 3).fillRoundedRect(x - 30, y - 10, 60, 9, 3);
   }
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 90; i++) {
     const x = 120 + i * 97 % 1700, y = i % 2 ? 1170 + i * 13 % 130 : 120 + i * 7 % 80;
     g.fillStyle([0xf8e7a2, 0xeab0a0, 0xffffff][i % 3]).fillCircle(x, y, 3);
   }

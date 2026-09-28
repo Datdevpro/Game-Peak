@@ -17,10 +17,37 @@ export class LightingManager {
     this.alpha += (target - this.alpha) * Math.min(1, dt * 1.5);
     this.shade.setSize(this.scene.scale.width, this.scene.scale.height).setAlpha(this.alpha);
     this.lamps.clear();
-    for (const x of [150, 480, 670, 1040, 1260, 1580, 1830]) {
-      this.lamps.fillStyle(0x567362).fillRoundedRect(x, 534, 5, 40, 2);
-      this.lamps.fillStyle(0xffecc1).fillRoundedRect(x - 5, 526, 15, 14, 3);
-      if (night > 0.02) for (let i = 4; i > 0; i--) this.lamps.fillStyle(0xffdc80, night * 0.06).fillCircle(x + 2, 533, i * 13);
+    const streetLamps = [
+      // Tuyến đường trên (vỉa hè ngang phía trên)
+      { x: 150, y: 534 }, { x: 480, y: 534 }, { x: 670, y: 534 }, { x: 1040, y: 534 },
+      { x: 1260, y: 534 }, { x: 1580, y: 534 }, { x: 1830, y: 534 },
+
+      // Tuyến đường giữa (vỉa hè phía dưới lòng đường xe chạy)
+      { x: 150, y: 692 }, { x: 480, y: 692 }, { x: 670, y: 692 }, { x: 1040, y: 692 },
+      { x: 1260, y: 692 }, { x: 1580, y: 692 }, { x: 1830, y: 692 },
+
+      // Tuyến phố đi bộ dọc (hai trục kết nối Bắc - Nam)
+      { x: 505, y: 840 }, { x: 1105, y: 840 },
+
+      // Công viên Mầm (lối dạo quanh hồ nước và ghế nghỉ)
+      { x: 765, y: 840 }, { x: 765, y: 955 },
+
+      // Tuyến đường đi bộ dưới cùng (dọc trước Mặt Bằng 01, Công Viên, Mặt Bằng 02, Nhà Của Nắng)
+      { x: 130, y: 1040 }, { x: 470, y: 1040 }, { x: 670, y: 1040 }, { x: 1040, y: 1040 },
+      { x: 1260, y: 1040 }, { x: 1560, y: 1040 }, { x: 1830, y: 1040 },
+    ];
+
+    for (const lamp of streetLamps) {
+      const { x, y } = lamp;
+      this.lamps.fillStyle(0x3e5548, 0.25).fillEllipse(x + 2, y + 40, 10, 4);
+      this.lamps.fillStyle(0x567362).fillRoundedRect(x, y, 5, 40, 2);
+      this.lamps.fillStyle(0x405b4c).fillRoundedRect(x - 6, y - 10, 17, 3, 1);
+      this.lamps.fillStyle(0xffecc1).fillRoundedRect(x - 5, y - 8, 15, 14, 3);
+      if (night > 0.02) {
+        for (let i = 4; i > 0; i--) {
+          this.lamps.fillStyle(0xffdc80, night * 0.065).fillCircle(x + 2, y - 1, i * 14);
+        }
+      }
     }
     this.rain.clear();
     if (world.weather === 'rain') {
