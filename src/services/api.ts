@@ -56,21 +56,33 @@ export function getWebSocketUrl(): string {
 export function connect() {
   stopped = false; clearTimeout(reconnectTimer); socket?.close();
   const wsUrl = getWebSocketUrl();
-  const ws = new WebSocket(wsUrl); socket = ws;
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token: token() }));
-  ws.onmessage = event => {
-    const data = JSON.parse(event.data as string) as ServerMessage;
-    if (data.type === 'world') useGameStore.setState({ world: data.world, connected: true });
-    else if (data.type === 'state') useGameStore.setState({ player: data.player });
-    else if (data.type === 'sale') gameEvents.dispatchEvent(new CustomEvent('sale', { detail: data }));
-    else if (data.type === 'error') useGameStore.getState().notify(data.message, true);
-  };
-  ws.onclose = event => {
-    if (socket !== ws) return;
-    useGameStore.setState({ connected: false });
-    if (event.code === 4001) { sessionStorage.removeItem(SESSION_KEY); useGameStore.setState({ player: null }); return; }
-    if (!stopped && token()) reconnectTimer = setTimeout(connect, 1800);
-  };
+  console.log('[GamePeak] Connecting WebSocket:', wsUrl);
+  try {
+    const ws = new WebSocket(wsUrl); socket = ws;
+    ws.onopen = () => {
+      console.log('[GamePeak] WebSocket connected successfully!');
+      ws.send(JSON.stringify({ type: 'auth', token: token() }));
+    };
+    ws.onmessage = event => {
+      const data = JSON.parse(event.data as string) as ServerMessage;
+      if (data.type === 'world') useGameStore.setState({ world: data.world, connected: true });
+      else if (data.type === 'state') useGameStore.setState({ player: data.player });
+      else if (data.type === 'sale') gameEvents.dispatchEvent(new CustomEvent('sale', { detail: data }));
+      else if (data.type === 'error') useGameStore.getState().notify(data.message, true);
+    };
+    ws.onerror = err => {
+      console.warn('[GamePeak] WebSocket error:', err);
+    };
+    ws.onclose = event => {
+      if (socket !== ws) return;
+      console.warn('[GamePeak] WebSocket closed. Code:', event.code, 'Reason:', event.reason || 'none');
+      useGameStore.setState({ connected: false });
+      if (event.code === 4001) { sessionStorage.removeItem(SESSION_KEY); useGameStore.setState({ player: null }); return; }
+      if (!stopped && token()) reconnectTimer = setTimeout(connect, 1800);
+    };
+  } catch (err) {
+    console.error('[GamePeak] Failed to create WebSocket:', err);
+  }
 }
 export function sendMovement(x: number, y: number) {
   if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'input', x, y }));
