@@ -32,9 +32,30 @@ export async function logout() {
   await request('/auth/logout', {}); stopped = true; clearTimeout(reconnectTimer); socket?.close();
   sessionStorage.removeItem(SESSION_KEY); useGameStore.setState({ player: null, connected: false, panel: null });
 }
+export function getWebSocketUrl(): string {
+  const configured = import.meta.env.VITE_COLYSEUS_URL;
+  if (configured) {
+    let url = configured.trim();
+    url = url.replace(/^http:\/\//i, 'ws://').replace(/^https:\/\//i, 'wss://');
+    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+      url = `wss://${url}`;
+    }
+    try {
+      const parsed = new URL(url);
+      if (!parsed.pathname || parsed.pathname === '/') {
+        parsed.pathname = '/ws';
+      }
+      return parsed.toString();
+    } catch {
+      return url.endsWith('/ws') ? url : `${url.replace(/\/$/, '')}/ws`;
+    }
+  }
+  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
+}
+
 export function connect() {
   stopped = false; clearTimeout(reconnectTimer); socket?.close();
-  const wsUrl = import.meta.env.VITE_COLYSEUS_URL || `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
+  const wsUrl = getWebSocketUrl();
   const ws = new WebSocket(wsUrl); socket = ws;
   ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token: token() }));
   ws.onmessage = event => {
