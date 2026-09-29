@@ -21,7 +21,13 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
   const allowedOrigins = options.allowedOrigins ?? ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001'];
   function originAllowed(origin: string | undefined, host: string | undefined) {
     if (!origin) return true;
-    try { return allowedOrigins.includes(origin) || new URL(origin).host === host; } catch { return false; }
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return true;
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost === host) return true;
+      if (originHost.endsWith('.vercel.app')) return true;
+      return false;
+    } catch { return false; }
   }
   function rate(key: string, limit: number, window = 60_000) {
     const now = Date.now(); let bucket = buckets.get(key);
@@ -33,6 +39,21 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
   function send(ws: WebSocket, data: unknown) { if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount < 256_000) ws.send(JSON.stringify(data)); }
   function sendState(ids: string[]) { for (const id of new Set(ids)) { const ws = sockets.get(id); if (ws) send(ws, { type: 'state', player: service.players.snapshot(id, service.economy.prices, room.players.get(id)?.actor) }); } }
   app.disable('x-powered-by'); app.use(express.json({ limit: '8kb' }));
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && originAllowed(origin, req.headers.host)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (allowedOrigins.includes('*')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
   app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     try { ensure(originAllowed(req.headers.origin, req.headers.host), 'Nguồn truy cập không được phép.', 403); rate(`api:${req.ip}`, 600); next(); } catch (e) { next(e); }
