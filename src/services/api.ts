@@ -5,9 +5,13 @@ const SESSION_KEY = 'gamepeak.session';
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 let stopped = false;
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
+
 export function token() { return sessionStorage.getItem(SESSION_KEY); }
 async function request<T>(url: string, body?: unknown): Promise<T> {
-  const response = await fetch(`/api${url}`, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(token() ? { Authorization: `Bearer ${token()}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  const response = await fetch(`${API_BASE}${url}`, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(token() ? { Authorization: `Bearer ${token()}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const data = await response.json() as T & { error?: string };
   if (!response.ok) throw new Error(data.error || 'Không thể kết nối máy chủ.');
   return data;
@@ -30,7 +34,8 @@ export async function logout() {
 }
 export function connect() {
   stopped = false; clearTimeout(reconnectTimer); socket?.close();
-  const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`); socket = ws;
+  const wsUrl = import.meta.env.VITE_COLYSEUS_URL || `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
+  const ws = new WebSocket(wsUrl); socket = ws;
   ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token: token() }));
   ws.onmessage = event => {
     const data = JSON.parse(event.data as string) as ServerMessage;

@@ -34,7 +34,7 @@ export class GameService {
   readonly players: PlayerRepository; readonly businesses: BusinessManager; readonly marketplace: MarketplaceManager;
   readonly economy = new EconomyManager();
   constructor(readonly db: GameDatabase) { this.players = new PlayerRepository(db); this.businesses = new BusinessManager(this.players); this.marketplace = new MarketplaceManager(this.players); }
-  execute(playerId: string, raw: unknown, position: Point | undefined, day: number, hour = 12) {
+  execute(playerId: string, raw: unknown, position?: Point, day = 1, hour = 12) {
     const envelope = z.object({ requestId: z.string().uuid() }).parse(raw);
     const intent = intentSchema.parse(raw), fingerprint = JSON.stringify(intent);
     const result = this.db.transaction(() => {
