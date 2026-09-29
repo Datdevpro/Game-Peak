@@ -1,6 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
 import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod';
 import { GameDatabase } from './database/db';
@@ -90,7 +91,12 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
     room.checkpoint(); sendState([id]); res.json({ ok: true });
   });
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Không tìm thấy chức năng.' }));
-  if (options.production) { app.use(express.static(resolve('dist'))); app.get('/{*path}', (_req, res) => res.sendFile(resolve('dist/index.html'))); }
+  if (options.production && existsSync(resolve('dist/index.html'))) {
+    app.use(express.static(resolve('dist')));
+    app.get('/{*path}', (_req, res) => res.sendFile(resolve('dist/index.html')));
+  } else {
+    app.get('/', (_req, res) => res.json({ ok: true, server: 'Game-Peak Backend Live', ws: '/ws' }));
+  }
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof z.ZodError) { res.status(400).json({ error: 'Dữ liệu không hợp lệ. Kiểm tra tên, mật khẩu, số lượng và giá.' }); return; }
     if (error instanceof GameError) { res.status(error.status).json({ error: error.message }); return; }
