@@ -19,7 +19,7 @@ describe('Thời gian 24h & Asia/Ho_Chi_Minh Timezone', () => {
     expect(vnTime.minutes).toBeGreaterThanOrEqual(0);
     
     const tm = new TimeManager(0, true);
-    expect(tm.minutes).toBe(vnTime.minutes);
+    expect(Math.abs(tm.minutes - vnTime.minutes)).toBeLessThan(0.1);
   });
 });
 

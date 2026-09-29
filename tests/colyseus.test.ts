@@ -19,7 +19,7 @@ describe('Colyseus Room & Schema Serialization', () => {
     player.name = 'TestHero';
     player.x = 100;
     player.y = 200;
-    player.direction = 'down';
+    player.direction = 1;
     player.moving = false;
     state.players.set(player.id, player);
 
@@ -43,7 +43,6 @@ describe('Colyseus Room & Schema Serialization', () => {
     const auth = new AuthService(db);
 
     const room = new ColyseusTownRoom();
-    // @ts-expect-error private property access for test verification
     room.onCreate({ service, auth, debug: true });
 
     expect(room.state).toBeDefined();
