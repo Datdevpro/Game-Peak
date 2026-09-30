@@ -4,7 +4,7 @@ import type { Business, InventoryItem, PlayerState, Point, SavingsDeposit } from
 import { GameDatabase } from '../database/db';
 import { ensure } from './errors';
 export interface ProfileRow { id: string; username: string; avatar: number; x: number; y: number; apartment: number; commerce: number }
-export interface BusinessRow { id: string; owner_id: string; property_id: string; type: 'coffee'; name: string; level: number; equipped: number; is_open: number; price: number; revenue: number; cogs: number; rent: number; salary: number; utility: number; reputation: number; customers: number; last_charged_day: number; servings: number; stock_cost: number }
+export interface BusinessRow { id: string; owner_id: string; property_id: string; type: 'coffee'; name: string; level: number; equipped: number; is_open: number; price: number; revenue: number; cogs: number; rent: number; salary: number; utility: number; reputation: number; customers: number; last_charged_day: number; created_at: number; servings: number; stock_cost: number }
 export const businessQuery = 'SELECT b.*,i.servings,i.cost AS stock_cost FROM businesses b JOIN business_inventory i ON i.business_id=b.id';
 export function toBusiness(b: BusinessRow): Business {
   const def = BUSINESS_DEFINITIONS[b.type];
@@ -22,7 +22,11 @@ export class PlayerRepository {
     const row = this.db.get<{ quantity: number; cost: number }>('SELECT quantity,cost FROM inventory_items WHERE player_id=? AND item_id=?', id, item);
     ensure(row && row.quantity >= quantity, 'Bạn chưa có đủ hàng trong túi.');
     const cost = quantity === row.quantity ? row.cost : Math.floor(row.cost * quantity / row.quantity);
-    this.db.run('UPDATE inventory_items SET quantity=quantity-?,cost=cost-? WHERE player_id=? AND item_id=?', quantity, cost, id, item); return cost;
+    this.db.run('UPDATE inventory_items SET quantity=quantity-?,cost=cost-? WHERE player_id=? AND item_id=?', quantity, cost, id, item);
+    if (quantity === row.quantity && (item === 'cap' || item === 'umbrella' || item === 'raincoat')) {
+      this.db.run(`UPDATE player_fashion SET ${item}=0 WHERE player_id=?`, id);
+    }
+    return cost;
   }
   debit(id: string, amount: number, label: string, businessId: string | null = null) {
     ensure(Number.isSafeInteger(amount) && amount >= 0, 'Số tiền không hợp lệ.');

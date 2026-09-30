@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ITEMS, type ItemId, money } from '../../../shared/config';
+import { CONFIG, ITEMS, type ItemId, money } from '../../../shared/config';
+import { BUILDINGS, distance } from '../../../shared/world';
 import type { Listing } from '../../../shared/types';
 import { useGameStore } from '../../stores/gameStore';
 import { action, getListings } from '../../services/api';
@@ -9,6 +10,8 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
   const [tab, setTab] = useState<'wholesale' | 'p2p'>(initialTab);
   const player = useGameStore(s => s.player);
   const world = useGameStore(s => s.world);
+  const connected = useGameStore(s => s.connected);
+  const position = useGameStore(s => s.position);
   const [loading, setLoading] = useState(false);
 
   // Wholesale state
@@ -26,14 +29,17 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
 
   useEffect(() => {
     loadListings();
+    if (tab !== 'p2p') return;
+    const timer = setInterval(() => { void loadListings(true); }, 5000);
+    return () => clearInterval(timer);
   }, [tab]);
 
-  const loadListings = async () => {
+  const loadListings = async (silent = false) => {
     try {
       const data = await getListings();
       setListings(data);
-    } catch {
-      // ignore
+    } catch (error) {
+      if (!silent) useGameStore.getState().notify(error instanceof Error ? error.message : 'Không thể tải chợ cư dân.', true);
     }
   };
 
@@ -44,6 +50,8 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
   const unitCost = tradeMode === 'buy' ? currentPrice : Math.floor(currentPrice * 0.75);
   const totalCost = unitCost * tradeQty;
   const inBag = player.inventory.find(i => i.itemId === selectedItem)?.quantity || 0;
+  const marketOpen = Math.floor(world.minutes / 60) % 24 >= 6 && Math.floor(world.minutes / 60) % 24 < 22;
+  const nearMarket = distance(position, BUILDINGS.find(b => b.id === 'market')!.door) <= CONFIG.interactionDistance;
 
   const handleWholesaleTrade = async () => {
     try {
@@ -80,7 +88,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
   };
 
   const handleBuyListing = async (listingId: string, maxQty: number) => {
-    const qty = buyQtyMap[listingId] || maxQty;
+    const qty = Math.min(buyQtyMap[listingId] || maxQty, maxQty, CONFIG.maxQuantity);
     try {
       setLoading(true);
       await action({
@@ -199,7 +207,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
                   type="number"
                   className="qty-input"
                   min={1}
-                  max={tradeMode === 'buy' ? 500 : inBag}
+                  max={tradeMode === 'buy' ? CONFIG.maxQuantity : Math.min(CONFIG.maxQuantity, inBag)}
                   value={tradeQty}
                   onChange={e => setTradeQty(Math.max(1, parseInt(e.target.value) || 1))}
                 />
@@ -228,7 +236,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
                   <button
                     type="button"
                     className="qty-preset-btn"
-                    onClick={() => setTradeQty(Math.max(1, inBag))}
+                  onClick={() => setTradeQty(Math.max(1, Math.min(CONFIG.maxQuantity, inBag)))}
                   >
                     Tất cả ({inBag})
                   </button>
@@ -243,10 +251,11 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
             </div>
           </div>
 
+          <p>{!connected ? 'Đang chờ kết nối máy chủ.' : !nearMarket ? 'Hãy đi tới cửa Chợ Mầm Xanh để mua hoặc bán hàng đầu mối.' : !marketOpen ? 'Chợ đầu mối mở cửa 06:00–22:00. Chợ cư dân P2P vẫn hoạt động.' : 'Bạn đang giao dịch tại chợ đầu mối.'}</p>
           <div className="action-row mt-3">
             <button
               className={`btn-primary btn-large ${tradeMode === 'buy' ? 'buy-btn' : 'sell-btn'}`}
-              disabled={loading || (tradeMode === 'buy' && player.cash < totalCost) || (tradeMode === 'sell' && inBag < tradeQty)}
+              disabled={loading || !connected || !nearMarket || !marketOpen || tradeQty < 1 || tradeQty > CONFIG.maxQuantity || (tradeMode === 'buy' && player.cash < totalCost) || (tradeMode === 'sell' && inBag < tradeQty)}
               onClick={handleWholesaleTrade}
             >
               {loading
@@ -290,7 +299,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
                   {listings.map(item => {
                     const isOwn = item.sellerId === player.id;
                     const itemDef = ITEMS[item.itemId] ?? { name: item.itemId, icon: '📦' };
-                    const buyQty = buyQtyMap[item.id] || item.quantity;
+                    const buyQty = Math.min(buyQtyMap[item.id] || item.quantity, item.quantity, CONFIG.maxQuantity);
                     const canAfford = player.cash >= item.price * buyQty;
 
                     return (
@@ -324,7 +333,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
                                   type="number"
                                   className="qty-input-sm"
                                   min={1}
-                                  max={item.quantity}
+                                  max={Math.min(CONFIG.maxQuantity, item.quantity)}
                                   value={buyQty}
                                   onChange={e =>
                                     setBuyQtyMap({
@@ -382,7 +391,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
                     type="number"
                     className="form-input"
                     min={1}
-                    max={player.inventory.find(i => i.itemId === listItem)?.quantity || 1}
+                    max={Math.min(CONFIG.maxQuantity, player.inventory.find(i => i.itemId === listItem)?.quantity || 1)}
                     value={listQty}
                     onChange={e => setListQty(Math.max(1, parseInt(e.target.value) || 1))}
                     required
@@ -411,7 +420,7 @@ export function MarketModal({ onClose, initialTab = 'wholesale' }: { onClose: ()
               <button
                 type="submit"
                 className="btn-primary btn-large mt-3"
-                disabled={loading || (player.inventory.find(i => i.itemId === listItem)?.quantity || 0) < listQty}
+                disabled={loading || listQty < 1 || listQty > CONFIG.maxQuantity || (player.inventory.find(i => i.itemId === listItem)?.quantity || 0) < listQty}
               >
                 {loading ? 'Đang đăng tin...' : 'Xác nhận Đăng tin bán'}
               </button>

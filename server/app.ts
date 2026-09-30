@@ -12,11 +12,20 @@ import { TownRoom } from './systems/TownRoom';
 const credentials = z.object({ username: z.string().trim().regex(/^[\p{L}\p{N}_ -]{3,20}$/u), password: z.string().min(8).max(128), avatar: z.number().int().min(0).max(23).default(0) });
 const movement = z.object({ type: z.literal('input'), x: z.number().finite().min(-1).max(1), y: z.number().finite().min(-1).max(1) });
 const debugCommand = z.discriminatedUnion('type', [z.object({ type: z.literal('time'), hour: z.number().min(0).max(23.99) }), z.object({ type: z.literal('weather'), weather: z.enum(['sunny', 'cloudy', 'rain']) }), z.object({ type: z.literal('money') }), z.object({ type: z.literal('npc') }), z.object({ type: z.literal('event'), index: z.number().int().min(0).max(2) })]);
-export function createGameServer(options: { databasePath?: string; debug?: boolean; production?: boolean; allowedOrigins?: string[] } = {}) {
+export function createGameServer(options: { databasePath?: string; debug?: boolean; production?: boolean; allowedOrigins?: string[]; externalWebSockets?: boolean } = {}) {
   const db = new GameDatabase(options.databasePath), service = new GameService(db), auth = new AuthService(db);
   const debug = !options.production && options.debug === true;
   const room = new TownRoom(service, debug), app = express(), http = createServer(app);
-  const wsServer = new WebSocketServer({ server: http, path: '/ws', maxPayload: 8192 });
+  // Only this handler owns /ws; Colyseus may own other upgrade paths.
+  const wsServer = new WebSocketServer({ noServer: true, maxPayload: 8192 });
+  http.on('upgrade', (req, socket, head) => {
+    if (req.url?.split('?')[0] !== '/ws') {
+      if (!options.externalWebSockets) socket.destroy();
+      return;
+    }
+    wsServer.handleUpgrade(req, socket, head, ws => wsServer.emit('connection', ws, req));
+  });
+  http.once('listening', () => room.start());
   const sockets = new Map<string, WebSocket>(), socketTokens = new Map<WebSocket, string>();
   const buckets = new Map<string, { count: number; reset: number }>();
   const allowedOrigins = options.allowedOrigins ?? ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3001'];
@@ -26,7 +35,6 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
     try {
       const originHost = new URL(origin).host;
       if (originHost === host) return true;
-      if (originHost.endsWith('.vercel.app')) return true;
       return false;
     } catch { return false; }
   }
@@ -44,6 +52,7 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
     const origin = req.headers.origin;
     if (origin && originAllowed(origin, req.headers.host)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+      res.vary('Origin');
     } else if (allowedOrigins.includes('*')) {
       res.setHeader('Access-Control-Allow-Origin', '*');
     }
@@ -59,7 +68,7 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
     res.setHeader('Cache-Control', 'no-store');
     try { ensure(originAllowed(req.headers.origin, req.headers.host), 'Nguồn truy cập không được phép.', 403); rate(`api:${req.ip}`, 600); next(); } catch (e) { next(e); }
   });
-  app.get('/api/health', (_req, res) => res.json({ ok: true, town: 'Mầm Xanh' }));
+  app.get('/api/health', (_req, res) => res.json({ ok: true, town: 'Mầm Xanh', realtime: 'native-json', websocketPath: '/ws', database: 'sqlite' }));
   app.post('/api/auth/:mode', async (req, res) => {
     if (req.params.mode === 'logout') {
       const id = requirePlayer(req), token = bearer(req); auth.logout(token);
@@ -76,7 +85,7 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
   app.get('/api/marketplace', (req, res) => { requirePlayer(req); res.json(service.marketplace.list()); });
   app.post('/api/action', (req, res) => {
     const id = requirePlayer(req); rate(`action:${id}`, 120);
-    const result = service.execute(id, req.body, room.players.get(id)?.actor, room.time.day, room.time.hour);
+    const result = service.execute(id, req.body, room.players.get(id)?.actor, room.time.day, room.time.hour, room.time.useRealTime);
     sendState(result.affected); res.json({ message: result.message, player: service.players.snapshot(id, service.economy.prices, room.players.get(id)?.actor) });
   });
   if (debug) app.post('/api/debug', (req, res) => {
@@ -135,7 +144,7 @@ export function createGameServer(options: { databasePath?: string; debug?: boole
   room.on('sale', sale => { for (const ws of sockets.values()) send(ws, { type: 'sale', ...sale }); });
   const cleanup = setInterval(() => { for (const [key, bucket] of buckets) if (bucket.reset < Date.now()) buckets.delete(key); db.run('DELETE FROM requests WHERE created_at<?', Date.now() - 7 * 86400000); }, 60000);
   return { app, http, db, service, auth, room,
-    listen: (port: number, host = '127.0.0.1') => new Promise<void>(resolve => { http.listen(port, host, () => { room.start(); resolve(); }); }),
+    listen: (port: number, host = '127.0.0.1') => new Promise<void>((resolve, reject) => { http.once('error', reject); http.listen(port, host, () => { http.removeListener('error', reject); resolve(); }); }),
     close: async () => { clearInterval(cleanup); room.stop(); for (const ws of wsServer.clients) ws.terminate(); await new Promise<void>(resolve => wsServer.close(() => resolve())); await new Promise<void>(resolve => http.close(() => resolve())); db.close(); },
   };
 }

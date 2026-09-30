@@ -11,6 +11,7 @@ interface Presence { actor: Actor; input: { x: number; y: number }; inputAt: num
 export class TownRoom extends EventEmitter {
   readonly time: TimeManager; readonly weather: WeatherManager; readonly events: EventManager; readonly npcs: NPCManager;
   readonly players = new Map<string, Presence>();
+  private connections = new Map<string, Set<string>>();
   private timer?: ReturnType<typeof setInterval>;
   private elapsed = 0; private checkpointElapsed = 0;
   constructor(readonly service: GameService, readonly debug = false) {
@@ -40,16 +41,23 @@ export class TownRoom extends EventEmitter {
     }
     this.npcs.update(dt, this.time.hour, this.weather.kind, this.events.current);
     this.elapsed += dt; this.checkpointElapsed += dt;
-    if (this.elapsed >= 1) { this.elapsed = 0; this.service.businesses.chargeDay(this.time.day); this.emit('dirty', [...this.players.keys()]); }
+    if (this.elapsed >= 1) { this.elapsed = 0; this.service.businesses.chargeDay(this.time.day, this.time.useRealTime); this.emit('dirty', [...this.players.keys()]); }
     if (this.checkpointElapsed >= 5) { this.checkpointElapsed = 0; this.checkpoint(); }
     this.emit('world', this.snapshot());
   }
-  join(id: string) {
+  join(id: string, connection = 'native') {
+    let connections = this.connections.get(id);
+    if (!connections) { connections = new Set(); this.connections.set(id, connections); }
+    connections.add(connection);
     if (this.players.has(id)) return;
     const p = this.service.players.profile(id);
     this.players.set(id, { actor: { id, name: p.username, avatar: p.avatar, x: p.x, y: p.y, moving: false, direction: 1 }, input: { x: 0, y: 0 }, inputAt: 0 });
   }
-  leave(id: string) {
+  leave(id: string, connection = 'native') {
+    const connections = this.connections.get(id);
+    connections?.delete(connection);
+    if (connections?.size) return;
+    this.connections.delete(id);
     const p = this.players.get(id); if (!p) return;
     this.service.db.run('UPDATE profiles SET x=?,y=? WHERE id=?', p.actor.x, p.actor.y, id); this.players.delete(id);
   }

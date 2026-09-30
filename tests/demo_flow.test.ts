@@ -8,6 +8,7 @@ describe('Demo Flow V1 Hoàn chỉnh (Section 35)', () => {
     // 1. Start test server
     const server = createGameServer({ databasePath: ':memory:', debug: true });
     await server.listen(3099, '127.0.0.1');
+    server.room.time.setHour(10);
 
     const api = async (path: string, body?: unknown, token?: string) => {
       const res = await fetch(`http://127.0.0.1:3099/api${path}`, {

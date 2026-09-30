@@ -4,6 +4,7 @@ import { GameDatabase } from '../server/database/db';
 import { GameService } from '../server/services/GameService';
 import { AuthService } from '../server/services/AuthService';
 import { ColyseusTownRoom } from '../server/colyseus/TownRoom';
+import { TownRoom } from '../server/systems/TownRoom';
 
 describe('Colyseus Room & Schema Serialization', () => {
   it('khởi tạo TownState với Schema Map và Array hợp lệ', () => {
@@ -49,5 +50,35 @@ describe('Colyseus Room & Schema Serialization', () => {
     expect(room.state.weather).toBeDefined();
 
     room.onDispose();
+    db.close();
+  });
+
+  it('shares simulation and keeps presence until the last transport leaves', async () => {
+    const db = new GameDatabase(':memory:');
+    const service = new GameService(db);
+    const auth = new AuthService(db);
+    const sim = new TownRoom(service);
+    const adapter = new ColyseusTownRoom();
+    try {
+      const user = await auth.register('SharedPlayer', 'password123', 0);
+      adapter.onCreate({ service, auth, simulation: sim });
+      sim.join(user.id);
+      sim.join(user.id, 'colyseus:test-session');
+      sim.tick(0.1);
+      expect(adapter.state.players.has(user.id)).toBe(true);
+      sim.leave(user.id, 'colyseus:test-session');
+      expect(sim.players.has(user.id)).toBe(true);
+      sim.leave(user.id);
+      sim.tick(0.1);
+      expect(adapter.state.players.has(user.id)).toBe(false);
+      adapter.onDispose();
+      expect(sim.listenerCount('world')).toBe(0);
+      // Disposing an adapter must not shut down the shared game's simulation.
+      sim.join(user.id);
+      sim.input(user.id, 1, 0);
+      const x = sim.players.get(user.id)!.actor.x;
+      sim.tick(0.1);
+      expect(sim.players.get(user.id)!.actor.x).toBeGreaterThan(x);
+    } finally { adapter.onDispose(); sim.stop(); db.close(); }
   });
 });

@@ -1,5 +1,7 @@
 # ✳ GAMEPEAK — MẦM XANH
 
+> Deploy Vercel/Render: xem [báo cáo kiểm tra và cấu hình sửa lỗi kết nối](DEPLOYMENT_AUDIT.md). Runtime hiện dùng SQLite + native WebSocket; Supabase chưa được tích hợp vào luồng game.
+
 > **“Nếu bạn được ban cho một số tiền đủ lớn ($100,000.00), bạn sẽ làm gì để tạo ra thêm tiền và trở nên giàu có hơn?”**
 
 **Gamepeak** là một prototype game web multiplayer mô phỏng cuộc sống, kinh doanh và làm giàu theo phong cách 2D cartoon/chibi dễ thương, kết hợp giữa yếu tố Tycoon, mô phỏng xã hội và kinh tế thị trường thực tế.

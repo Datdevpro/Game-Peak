@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { BUSINESS_DEFINITIONS, money } from '../../../shared/config';
+import { BUSINESS_DEFINITIONS, CONFIG, money } from '../../../shared/config';
+import { BUILDINGS, distance } from '../../../shared/world';
 import { useGameStore } from '../../stores/gameStore';
 import { action } from '../../services/api';
 import { ModalWrapper } from './ModalWrapper';
@@ -8,6 +9,8 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
   const player = useGameStore(s => s.player);
   const world = useGameStore(s => s.world);
   const selected = useGameStore(s => s.selected);
+  const connected = useGameStore(s => s.connected);
+  const position = useGameStore(s => s.position);
   const [loading, setLoading] = useState(false);
 
   // Rental state (if not owned)
@@ -27,6 +30,9 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
   const def = BUSINESS_DEFINITIONS.coffee;
   const beanItem = player.inventory.find(i => i.itemId === 'beans');
   const beanCount = beanItem?.quantity || 0;
+  const selectedProperty = world.properties.find(p => p.id === propertyId);
+  const door = BUILDINGS.find(b => b.id === propertyId)!.door;
+  const nearProperty = distance(position, door) <= CONFIG.interactionDistance;
 
   const handleRent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,17 +152,18 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
             <label className="form-label">Chọn vị trí mặt bằng</label>
             <div className="lot-selector-grid">
               {['lot-1', 'lot-2'].map(lot => {
-                const isOccupied = world.properties.find(p => p.id === lot)?.ownerId !== null;
+                const property = world.properties.find(p => p.id === lot);
+                const isOccupied = !!property?.ownerId;
                 const isSelected = propertyId === lot;
                 return (
                   <div
                     key={lot}
                     className={`lot-card ${isSelected ? 'selected' : ''} ${isOccupied ? 'occupied' : ''}`}
-                    onClick={() => !isOccupied && setPropertyId(lot)}
+                    onClick={() => property && !isOccupied && setPropertyId(lot)}
                   >
                     <div className="lot-badge">{lot === 'lot-1' ? 'Mặt bằng 01 (Phía Tây)' : 'Mặt bằng 02 (Phía Đông)'}</div>
                     <div className="lot-price">Tiền thuê: <strong>{money(def.rent)} / ngày</strong></div>
-                    <div className="lot-status">{isOccupied ? '❌ Đã có người thuê' : '✅ Đang trống · Sẵn sàng thuê'}</div>
+                    <div className="lot-status">{!property ? 'Đang tải trạng thái…' : isOccupied ? '❌ Đã có người thuê' : '✅ Đang trống · Sẵn sàng thuê'}</div>
                   </div>
                 );
               })}
@@ -182,10 +189,11 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
             <strong>{money(def.rent)}</strong>
           </div>
 
+          <p>{!connected ? 'Đang chờ kết nối máy chủ.' : !nearProperty ? `Hãy đi tới cửa ${propertyId === 'lot-1' ? 'Mặt bằng 01' : 'Mặt bằng 02'} để ký hợp đồng thuê.` : 'Bạn đang ở gần mặt bằng đã chọn.'}</p>
           <button
             type="submit"
             className="btn-primary btn-large"
-            disabled={loading || player.cash < def.rent}
+            disabled={loading || !connected || !nearProperty || !selectedProperty || !!selectedProperty.ownerId || player.cash < def.rent || shopName.trim().length < 2}
           >
             {loading ? 'Đang ký hợp đồng thuê...' : `Ký hợp đồng thuê (${money(def.rent)})`}
           </button>
@@ -259,14 +267,14 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
                   type="number"
                   className="qty-input-sm"
                   min={1}
-                  max={Math.max(1, beanCount)}
+                  max={Math.max(1, Math.min(CONFIG.maxQuantity, beanCount))}
                   value={stockQuantity}
                   onChange={e => setStockQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                 />
                 <button
                   className="btn-secondary btn-sm"
                   onClick={handleStock}
-                  disabled={loading || beanCount < stockQuantity}
+                  disabled={loading || stockQuantity < 1 || stockQuantity > CONFIG.maxQuantity || beanCount < stockQuantity}
                 >
                   Nhập kho (+{stockQuantity * 4} tách)
                 </button>
@@ -296,7 +304,7 @@ export function BusinessModal({ onClose }: { onClose: () => void }) {
                 <button
                   className="btn-primary btn-sm"
                   onClick={handleSetPrice}
-                  disabled={loading || Math.round(cupPrice * 100) === business.price}
+                  disabled={loading || cupPrice < 1 || cupPrice > 50 || Math.round(cupPrice * 100) === business.price}
                 >
                   Lưu giá
                 </button>

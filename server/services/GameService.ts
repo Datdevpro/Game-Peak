@@ -34,12 +34,13 @@ export class GameService {
   readonly players: PlayerRepository; readonly businesses: BusinessManager; readonly marketplace: MarketplaceManager;
   readonly economy = new EconomyManager();
   constructor(readonly db: GameDatabase) { this.players = new PlayerRepository(db); this.businesses = new BusinessManager(this.players); this.marketplace = new MarketplaceManager(this.players); }
-  execute(playerId: string, raw: unknown, position?: Point, day = 1, hour = 12) {
+  execute(playerId: string, raw: unknown, position?: Point, day = 1, hour = 12, realTime = false) {
     const envelope = z.object({ requestId: z.string().uuid() }).parse(raw);
     const intent = intentSchema.parse(raw), fingerprint = JSON.stringify(intent);
+    let replayed = false;
     const result = this.db.transaction(() => {
       const prior = this.db.get<{ fingerprint: string; result: string }>('SELECT fingerprint,result FROM requests WHERE player_id=? AND request_id=?', playerId, envelope.requestId);
-      if (prior) { ensure(prior.fingerprint === fingerprint, 'Mã giao dịch đã được dùng cho thao tác khác.', 409); return JSON.parse(prior.result) as { message: string; affected: string[] }; }
+      if (prior) { ensure(prior.fingerprint === fingerprint, 'Mã giao dịch đã được dùng cho thao tác khác.', 409); replayed = true; return JSON.parse(prior.result) as { message: string; affected: string[] }; }
       const near = (buildingId: string) => { const b = BUILDINGS.find(b => b.id === buildingId); ensure(b && position && distance(position, b.door) <= CONFIG.interactionDistance + 8, 'Hãy đi tới cửa địa điểm này để tương tác.'); };
       let message = 'Đã hoàn tất.', affected = [playerId];
       switch (intent.type) {
@@ -129,7 +130,7 @@ export class GameService {
         case 'SET_PRICE': this.businesses.price(playerId, intent.businessId, intent.price); message = 'Đã cập nhật giá bán.'; break;
         case 'TOGGLE_BUSINESS': {
           const b = this.businesses.get(intent.businessId, playerId);
-          ensure(!intent.open || b.last_charged_day >= day, 'Cần đủ tiền mặt để thanh toán chi phí ngày mới; hệ thống thử lại mỗi giây.');
+          ensure(!intent.open || this.businesses.hasPaidDay(b, day, realTime), 'Cần đủ tiền mặt để thanh toán chi phí ngày mới; hệ thống thử lại mỗi giây.');
           this.businesses.toggle(playerId, intent.businessId, intent.open); message = intent.open ? 'Quán đã mở cửa. Khách đang trên đường tới!' : 'Quán đã đóng cửa.'; break;
         }
         case 'UPGRADE_BUSINESS': this.businesses.upgrade(playerId, intent.businessId); message = 'Không gian mới, danh tiếng mới!'; break;
@@ -142,7 +143,7 @@ export class GameService {
       return value;
     });
     // Prices change on the next simulation tick, after the committed trade.
-    if (intent.type === 'BUY_ITEM' || intent.type === 'SELL_ITEM') this.economy.trade(intent.itemId as ItemId, intent.quantity * (intent.type === 'BUY_ITEM' ? 1 : -1));
+    if (!replayed && (intent.type === 'BUY_ITEM' || intent.type === 'SELL_ITEM')) this.economy.trade(intent.itemId as ItemId, intent.quantity * (intent.type === 'BUY_ITEM' ? 1 : -1));
     return result;
   }
 }

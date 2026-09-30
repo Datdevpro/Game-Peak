@@ -61,10 +61,21 @@ export class BusinessManager {
       return { businessId: b.id, propertyId: b.property_id, amount: b.price, ownerId: b.owner_id };
     });
   }
-  chargeDay(day: number) {
+  hasPaidDay(b: BusinessRow, day: number, realTime = false) {
+    if (!realTime) return b.last_charged_day >= day;
+    // Day-of-month alone repeats at month/year boundaries. Existing ledger
+    // timestamps also let old databases work without changing their schema.
+    const payment = this.players.db.get<{ paid_at: number | null }>(
+      "SELECT MAX(created_at) AS paid_at FROM ledger WHERE business_id=? AND label='Chi phí vận hành ngày mới'", b.id,
+    );
+    const vietnamDay = (timestamp: number) => Math.floor((timestamp + 7 * 3600000) / 86400000);
+    return vietnamDay(payment?.paid_at ?? b.created_at) >= vietnamDay(Date.now());
+  }
+  chargeDay(day: number, realTime = false) {
     const affected: string[] = [];
     this.players.db.transaction(() => {
-      for (const b of this.players.db.all<BusinessRow>(businessQuery + ' WHERE b.last_charged_day<?', day)) {
+      for (const b of this.players.db.all<BusinessRow>(businessQuery + (realTime ? '' : ' WHERE b.last_charged_day<?'), ...(realTime ? [] : [day]))) {
+        if (this.hasPaidDay(b, day, realTime)) continue;
         const def = BUSINESS_DEFINITIONS[b.type], salary = b.is_open ? def.salary : 0, utility = b.is_open ? def.utility : 0;
         const due = def.rent + salary + utility;
         if (this.players.wallet(b.owner_id).cash >= due) {

@@ -134,7 +134,7 @@ export class TownScene extends Phaser.Scene {
       if (nearest) {
         if (nearest.kind === 'fashion' || nearest.id === 'fashion') state.setPanel('fashion');
         else if (nearest.kind === 'cafe' || nearest.kind === 'office') state.setPanel('npc', nearest.id);
-        else state.setPanel(nearest.kind);
+        else state.setPanel(nearest.kind, nearest.id);
       } else if (nearNpc) {
         if (nearNpc.id === 'npc-fashion') state.setPanel('fashion');
         else state.setPanel('npc', nearNpc.id);
